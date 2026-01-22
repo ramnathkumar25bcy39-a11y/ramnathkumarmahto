@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Task Scheduler</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+
+        .app {
+            width: 95%;
+            max-width: 1100px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 22px;
+            padding: 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+        }
+
+        header p {
+            opacity: 0.9;
+            margin-top: 6px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 18px;
+            padding: 20px;
+        }
+
+        .panel h2 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            margin-top: 6px;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        .btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 1rem;
+            background: #00e5ff;
+            color: #000;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .tasks {
+            max-height: 420px;
+            overflow-y: auto;
+        }
+
+        .task {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task.done {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        .task-info h3 {
+            font-size: 1rem;
+        }
+
+        .task-info p {
+            font-size: 0.8rem;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+
+        .task-actions button {
+            margin-left: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .complete {
+            background: #00e676;
+        }
+
+        .delete {
+            background: #ff5252;
+            color: #fff;
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+        <header>
+            <h1>🗓 Smart Task Scheduler</h1>
+            <p>Plan • Schedule • Complete tasks efficiently</p>
+        </header>
+
+        <div class="layout">
+
+            <!-- Task Form -->
+            <div class="panel">
+                <h2>Create Task</h2>
+
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="title" placeholder="Enter task title" />
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="desc" rows="3" placeholder="Task details"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="date" />
+                </div>
+
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time" id="time" />
+                </div>
+
+                <button class="btn" onclick="addTask()">Add Task</button>
+            </div>
+
+            <!-- Task List -->
+            <div class="panel">
+                <h2>Scheduled Tasks</h2>
+                <div id="taskList" class="tasks"></div>
+            </div>
+
+        </div>
+
+        <footer>
+            © 2026 Smart Task Scheduler | HTML • CSS • JavaScript
+        </footer>
+    </div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+        function saveTasks() {
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        function renderTasks() {
+            const list = document.getElementById("taskList");
+            list.innerHTML = "";
+
+            tasks.forEach((task, index) => {
+                const div = document.createElement("div");
+                div.className = "task" + (task.done ? " done" : "");
+
+                div.innerHTML = `
+        <div class="task-info">
+          <h3>${task.title}</h3>
+          <p>${task.desc || "No description"}</p>
+          <p>📅 ${task.date} ⏰ ${task.time}</p>
+        </div>
+        <div class="task-actions">
+          <button class="complete" onclick="toggleDone(${index})">✔</button>
+          <button class="delete" onclick="deleteTask(${index})">✖</button>
+        </div>
+      `;
+
+                list.appendChild(div);
+            });
+        }
+
+        function addTask() {
+            const title = document.getElementById("title").value.trim();
+            const desc = document.getElementById("desc").value.trim();
+            const date = document.getElementById("date").value;
+            const time = document.getElementById("time").value;
+
+            if (!title || !date || !time) {
+                alert("Please fill Title, Date and Time");
+                return;
+            }
+
+            tasks.push({ title, desc, date, time, done: false });
+            saveTasks();
+            renderTasks();
+
+            document.getElementById("title").value = "";
+            document.getElementById("desc").value = "";
+            document.getElementById("date").value = "";
+            document.getElementById("time").value = "";
+        }
+
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            saveTasks();
+            renderTasks();
+        }
+
+        function toggleDone(index) {
+            tasks[index].done = !tasks[index].done;
+            saveTasks();
+            renderTasks();
+        }
+
+        renderTasks();
+    </script>
+
+</body>
+
+</html>
